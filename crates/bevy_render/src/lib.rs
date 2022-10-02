@@ -138,6 +138,17 @@ impl Plugin for RenderPlugin {
             let surface = {
                 let windows = app.world.resource_mut::<bevy_window::Windows>();
                 let raw_handle = windows.get_primary().map(|window| unsafe {
+                    #[cfg(target_arch = "wasm32")]
+                    if let Some(canvas) = &window.canvas_element {
+                        return match canvas {
+                            bevy_window::Canvas::HtmlCanvas(canvas) => {
+                                instance.create_surface_from_canvas(canvas)
+                            }
+                            bevy_window::Canvas::OffscreenCanvas(canvas) => {
+                                instance.create_surface_from_offscreen_canvas(canvas)
+                            }
+                        };
+                    }
                     let handle = window.raw_window_handle().get_handle();
                     instance.create_surface(&handle)
                 });

@@ -204,6 +204,8 @@ pub struct Window {
     focused: bool,
     mode: WindowMode,
     canvas: Option<String>,
+    #[cfg(target_arch = "wasm32")]
+    pub canvas_element: Option<Canvas>,
     fit_canvas_to_parent: bool,
     command_queue: Vec<WindowCommand>,
 }
@@ -330,6 +332,8 @@ impl Window {
             focused: true,
             mode: window_descriptor.mode,
             canvas: window_descriptor.canvas.clone(),
+            #[cfg(target_arch = "wasm32")]
+            canvas_element: window_descriptor.canvas_element.clone(),
             fit_canvas_to_parent: window_descriptor.fit_canvas_to_parent,
             command_queue: Vec::new(),
         }
@@ -767,6 +771,17 @@ pub enum MonitorSelection {
     Number(usize),
 }
 
+#[cfg(target_arch = "wasm32")]
+#[derive(Clone, Debug)]
+pub enum Canvas {
+    HtmlCanvas(web_sys::HtmlCanvasElement),
+    OffscreenCanvas(web_sys::OffscreenCanvas),
+}
+#[cfg(target_arch = "wasm32")]
+unsafe impl Send for Canvas {}
+#[cfg(target_arch = "wasm32")]
+unsafe impl Sync for Canvas {}
+
 /// Describes the information needed for creating a window.
 ///
 /// This should be set up before adding the [`WindowPlugin`](crate::WindowPlugin).
@@ -834,6 +849,8 @@ pub struct WindowDescriptor {
     ///
     /// This value has no effect on non-web platforms.
     pub canvas: Option<String>,
+    #[cfg(target_arch = "wasm32")]
+    pub canvas_element: Option<Canvas>,
     /// Whether or not to fit the canvas element's size to its parent element's size.
     ///
     /// **Warning**: this will not behave as expected for parents that set their size according to the size of their
@@ -843,6 +860,11 @@ pub struct WindowDescriptor {
     /// This value has no effect on non-web platforms.
     pub fit_canvas_to_parent: bool,
 }
+
+#[cfg(target_arch = "wasm32")]
+unsafe impl Send for WindowDescriptor {}
+#[cfg(target_arch = "wasm32")]
+unsafe impl Sync for WindowDescriptor {}
 
 impl Default for WindowDescriptor {
     fn default() -> Self {
@@ -861,6 +883,8 @@ impl Default for WindowDescriptor {
             mode: WindowMode::Windowed,
             transparent: false,
             canvas: None,
+            #[cfg(target_arch = "wasm32")]
+            canvas_element: None,
             fit_canvas_to_parent: false,
         }
     }

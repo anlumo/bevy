@@ -46,6 +46,8 @@ pub struct ExtractedWindow {
     pub present_mode: PresentMode,
     pub swap_chain_texture: Option<TextureView>,
     pub size_changed: bool,
+    #[cfg(target_arch = "wasm32")]
+    pub canvas: Option<bevy_window::Canvas>,
 }
 
 #[derive(Default)]
@@ -89,6 +91,8 @@ fn extract_windows(
                     present_mode: window.present_mode(),
                     swap_chain_texture: None,
                     size_changed: false,
+                    #[cfg(target_arch = "wasm32")]
+                    canvas: window.canvas_element.clone(),
                 });
 
         // NOTE: Drop the swap chain frame here
@@ -156,6 +160,17 @@ pub fn prepare_windows(
             .surfaces
             .entry(window.id)
             .or_insert_with(|| unsafe {
+                #[cfg(target_arch = "wasm32")]
+                if let Some(canvas) = &window.canvas {
+                    return match canvas {
+                        bevy_window::Canvas::HtmlCanvas(canvas) => {
+                            render_instance.create_surface_from_canvas(canvas)
+                        }
+                        bevy_window::Canvas::OffscreenCanvas(canvas) => {
+                            render_instance.create_surface_from_offscreen_canvas(canvas)
+                        }
+                    };
+                }
                 // NOTE: On some OSes this MUST be called from the main thread.
                 render_instance.create_surface(&window.handle.get_handle())
             });
