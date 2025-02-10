@@ -3737,6 +3737,14 @@ where
     pub fn spawned_by(&self) -> MaybeLocation {
         self.entity.spawned_by()
     }
+
+    #[inline]
+    pub fn get_by_id(&self, component_id: ComponentId) -> Option<Ptr<'w>> {
+        bundle_contains_component::<B>(components, component_id).then(|| {
+            // SAFETY: We have read access for this component
+            unsafe { self.entity.get_by_id(component_id) }
+        })
+    }
 }
 
 impl<'a, B> From<&'a EntityMutExcept<'_, B>> for EntityRefExcept<'a, B>
@@ -3893,6 +3901,11 @@ where
     /// Returns the source code location from which this entity has been spawned.
     pub fn spawned_by(&self) -> MaybeLocation {
         self.entity.spawned_by()
+    }
+
+    #[inline]
+    pub fn get_by_id(&self, component_id: ComponentId) -> Option<Ptr<'w>> {
+        self.as_readonly().get_by_id(component_id)
     }
 }
 
