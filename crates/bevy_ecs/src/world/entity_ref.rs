@@ -2862,6 +2862,14 @@ where
             unsafe { self.entity.get_ref() }
         }
     }
+
+    #[inline]
+    pub fn get_by_id(&self, component_id: ComponentId) -> Option<Ptr<'w>> {
+        bundle_contains_component::<B>(components, component_id).then(|| {
+            // SAFETY: We have read access for this component
+            unsafe { self.entity.get_by_id(component_id) }
+        })
+    }
 }
 
 impl<'a, B> From<&'a EntityMutExcept<'_, B>> for EntityRefExcept<'a, B>
@@ -2969,6 +2977,11 @@ where
             // covered by the `contains` check above.
             unsafe { self.entity.get_mut() }
         }
+    }
+
+    #[inline]
+    pub fn get_by_id(&self, component_id: ComponentId) -> Option<Ptr<'w>> {
+        self.as_readonly().get_by_id(component_id)
     }
 }
 
